@@ -5,8 +5,18 @@
         > Lib__Tree.enum_entries "/home/benjamin/code/explore/elm/turtle/";;
         > Lib.Tree.enum_entries "/home/benjamin/code/explore/elm/turtle/";;
 
+    Or use `dune utop ./lib/`
+    Or use `dune utop`
+    while true;do clear && dune utop ./lib/;sleep 200ms;done
+
+    Alternative workflows
+
+    $ ocaml
+    > #use "down.top"
+    Then use Ctr-T to show the docs
 *)
-let greet = "WIP: tree"
+let greet = "WIP: tree4"
+let is_link path = (Unix.lstat path).st_kind = Unix.S_LNK
 
 let add_trailing_sep_char str =
   let sepChar = Filename.dir_sep in
@@ -21,6 +31,7 @@ type summary =
   { name : string
   ; is_dir : bool
   ; is_hidden : bool
+  ; is_link : bool
   ; size : int
   ; children : summary list
   ; parent_dir : string
@@ -32,11 +43,15 @@ let is_hidden path = path |> Filename.basename |> String.starts_with ~prefix:"."
 let rec to_summary path =
   let is_dir = Sys.is_directory path in
   let is_hidden = is_hidden path in
+  let is_link = is_link path in
   let size = (Unix.stat path).st_size in
-  let children = if is_dir then enum_entries path |> List.concat_map to_summary else [] in
+  let children =
+    if is_dir && not is_link then enum_entries path |> List.concat_map to_summary else []
+  in
   [ { name = path
     ; is_dir
     ; is_hidden
+    ; is_link
     ; size
     ; children
     ; parent_dir = Filename.dirname path |> add_trailing_sep_char
