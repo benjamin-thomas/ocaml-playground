@@ -32,14 +32,14 @@ let is_hidden path = path |> Filename.basename |> String.starts_with ~prefix:"."
 let rec to_summary path =
   let is_dir = Sys.is_directory path in
   let is_hidden = is_hidden path in
-  let size = if is_dir then 0 else -1 in
+  let size = (Unix.stat path).st_size in
   let children = if is_dir then enum_entries path |> List.concat_map to_summary else [] in
   [ { name = path
     ; is_dir
     ; is_hidden
     ; size
     ; children
-    ; parent_dir = dir_name path |> add_trailing_sep_char
+    ; parent_dir = Filename.dirname path |> add_trailing_sep_char
     }
   ]
 ;;
@@ -66,32 +66,28 @@ let toLowerName summary = summary.Name.ToLower()
 let compute path = enum_entries path |> List.concat_map to_summary
 
 (* TODO: make private fn *)
-let to_human size = "TODO:BTH:" ^ Int.to_string size
+let to_human size = Printf.sprintf "%10s" (Int.to_string size)
 let rec repeat n s = if n = 0 then "" else s ^ repeat (n - 1) s
 
 (* TODO: make private fn *)
-let print_path
-  ((depth : int), (size : int), (path : string), (is_dir : bool), (parent_dir : string))
-  =
+let print_path (depth, size, path, is_dir, parent_dir) : unit =
   let depth_to_ws = repeat depth "  " in
-  (* let simplePath = path.Replace(parent_dir, "") in *)
-  let simple_path = Str.(global_replace (regexp parent_dir) "" path) in
+  (* let simple_path = Str.(global_replace (regexp parent_dir) "" path) in *)
+  let simple_path = dir_name parent_dir ^ Filename.dir_sep ^ Filename.basename path in
   let file_type_emoji = if is_dir then "📁" else "📝" in
-  Printf.printf "[%d] %s [%s] %s %s" size file_type_emoji depth_to_ws simple_path
+  (* let _ = Printf.printf "\n\n%s -> %s [%s]\n\n" path simple_path parent_dir in *)
+  Printf.printf
+    "[%s] %s [%d] %s %s\n"
+    (to_human size)
+    file_type_emoji
+    depth
+    depth_to_ws
+    simple_path
 ;;
-
-let print_something = Printf.printf "Yes: %d" 1
-
-(* |> List.sort (fun (depth, _size, path, _is_dir, _parent_dir) -> compare path *)
 
 let print root_path =
   compute (root_path |> add_trailing_sep_char)
   |> tree_to_string 0
-  |> List.iter (fun ((depth, _size, path, _d, _e) : int * int * string * bool * string) ->
-       Printf.printf "[%d] %s" depth path)
+  |> List.sort (fun (_, _, path1, _, _) (_, _, path2, _, _) -> compare path1 path2)
+  |> List.iter print_path
 ;;
-(* |> List.iter (fun (depth) -> print_path (depth)) *)
-
-(*
-// print "/home/benjamin/code/explore/love2d/love-typescript-template/"
- *)
