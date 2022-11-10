@@ -1,23 +1,3 @@
-(*
-    Copy/paste into utop:
-
-        > #use_output "dune ocaml top";;
-        > Lib__Tree.enum_entries "/home/benjamin/code/explore/elm/turtle/";;
-        > Lib.Tree.enum_entries "/home/benjamin/code/explore/elm/turtle/";;
-
-    Or use `dune utop ./lib/`
-    Or use `dune utop`
-    while true;do clear && dune utop ./lib/;sleep 200ms;done
-
-    Alternative workflows
-
-    $ ocaml
-    > #use "down.top"
-    Then use Ctr-T to show the docs
-*)
-let greet = "WIP: tree4"
-let is_link path = (Unix.lstat path).st_kind = Unix.S_LNK
-
 let add_trailing_sep_char str =
   let sepChar = Filename.dir_sep in
   if String.ends_with ~suffix:sepChar str then str else str ^ sepChar
@@ -39,6 +19,7 @@ type summary =
 
 let dir_name path = Filename.dirname path |> Filename.basename
 let is_hidden path = path |> Filename.basename |> String.starts_with ~prefix:"."
+let is_link path = (Unix.lstat path).st_kind = Unix.S_LNK
 
 let rec to_summary path =
   let is_dir = Sys.is_directory path in
